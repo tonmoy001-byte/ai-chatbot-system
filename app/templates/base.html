@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Chatbot Admin{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-container { height: calc(100vh - 200px); }
+        .message-bubble { max-width: 70%; }
+        .typing-indicator span {
+            animation: blink 1.4s infinite both;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; }
+            40% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/admin" class="flex items-center">
+                        <i class="fas fa-robot text-blue-600 text-2xl mr-2"></i>
+                        <span class="font-bold text-xl text-gray-800">Chatbot Admin</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-1"></i> Dashboard
+                    </a>
+                    <a href="/admin/conversations" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-comments mr-1"></i> Conversations
+                    </a>
+                    <a href="/admin/stats" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-chart-bar mr-1"></i> Stats
+                    </a>
+                    <span id="user-info" class="text-sm text-gray-500"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 px-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

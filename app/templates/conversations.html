@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Conversations - AI Chatbot Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Conversations</h1>
+        <div class="flex space-x-2">
+            <select id="status-filter" class="border rounded-lg px-3 py-2 text-sm">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="closed">Closed</option>
+            </select>
+            <input type="text" id="search-input" placeholder="Search..." 
+                   class="border rounded-lg px-3 py-2 text-sm">
+        </div>
+    </div>
+
+    <!-- Conversations List -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="conversations-table" class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
+            <div class="text-sm text-gray-700">
+                Showing <span id="showing-count">0</span> of <span id="total-count">0</span> conversations
+            </div>
+            <div class="flex space-x-2">
+                <button id="prev-page" class="px-3 py-1 border rounded text-sm disabled:opacity-50" disabled>Previous</button>
+                <button id="next-page" class="px-3 py-1 border rounded text-sm disabled:opacity-50" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 0;
+    const pageSize = 20;
+
+    async function loadConversations(page = 0, status = '', search = '') {
+        try {
+            let url = `/admin/conversations?limit=${pageSize}&offset=${page * pageSize}`;
+            if (status) url += `&status=${status}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            const tbody = document.getElementById('conversations-table');
+            const conversations = data.conversations || [];
+            
+            if (conversations.length > 0) {
+                tbody.innerHTML = conversations.map(conv => `
+                    <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/admin/conversations/${conv.id}'">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${conv.id.substring(0, 8)}...
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${conv.customer_id.substring(0, 8)}...</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                ${conv.platform || 'Unknown'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${conv.message_count || 0}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${conv.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                ${conv.status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${new Date(conv.started_at).toLocaleDateString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${new Date(conv.last_message_at).toLocaleString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="/admin/conversations/${conv.id}" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('showing-count').textContent = conversations.length;
+                document.getElementById('total-count').textContent = data.count || conversations.length;
+                
+                document.getElementById('prev-page').disabled = page === 0;
+                document.getElementById('next-page').disabled = conversations.length < pageSize;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-gray-500">No conversations found</td></tr>';
+            }
+        } catch (error) {
+            console.error('Failed to load conversations:', error);
+        }
+    }
+
+    // Event listeners
+    document.getElementById('status-filter').addEventListener('change', (e) => {
+        currentPage = 0;
+        loadConversations(currentPage, e.target.value);
+    });
+
+    document.getElementById('prev-page').addEventListener('click', () => {
+        currentPage--;
+        loadConversations(currentPage, document.getElementById('status-filter').value);
+    });
+
+    document.getElementById('next-page').addEventListener('click', () => {
+        currentPage++;
+        loadConversations(currentPage, document.getElementById('status-filter').value);
+    });
+
+    // Initial load
+    loadConversations();
+</script>
+{% endblock %}

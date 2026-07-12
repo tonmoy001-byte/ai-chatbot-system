@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation - AI Chatbot Admin{% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-120px)]">
+    <!-- Conversation Info Sidebar -->
+    <div class="w-80 bg-white shadow-lg flex-shrink-0">
+        <div class="p-4 border-b">
+            <h2 class="font-semibold text-gray-800">Conversation Details</h2>
+        </div>
+        <div class="p-4 space-y-4">
+            <div>
+                <label class="text-sm text-gray-500">Customer ID</label>
+                <p class="font-mono text-sm" id="customer-id">Loading...</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Platform</label>
+                <p id="platform">-</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Status</label>
+                <p id="status">-</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Started</label>
+                <p id="started-at">-</p>
+            </div>
+            <div>
+                <label class="text-sm text-gray-500">Last Activity</label>
+                <p id="last-activity">-</p>
+            </div>
+        </div>
+        <div class="p-4 border-t">
+            <a href="/admin/conversations" class="text-blue-600 hover:text-blue-800 text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> Back to list
+            </a>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col bg-gray-50">
+        <!-- Messages -->
+        <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div class="text-center text-gray-500">Loading messages...</div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t">
+            <div class="flex space-x-2">
+                <input type="text" id="message-input" placeholder="Type a message..." 
+                       class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="send-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const conversationId = window.location.pathname.split('/').pop();
+    let ws = null;
+
+    async function loadConversation() {
+        try {
+            const response = await fetch(`/admin/conversations/${conversationId}`);
+            const data = await response.json();
+            
+            // Update sidebar
+            document.getElementById('customer-id').textContent = data.customer_id || 'Unknown';
+            document.getElementById('platform').textContent = data.platform || 'Unknown';
+            document.getElementById('status').innerHTML = `
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${data.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                    ${data.status}
+                </span>
+            `;
+            document.getElementById('started-at').textContent = new Date(data.started_at).toLocaleString();
+            document.getElementById('last-activity').textContent = new Date(data.last_message_at).toLocaleString();
+            
+            // Render messages
+            renderMessages(data.messages || []);
+            
+        } catch (error) {
+            console.error('Failed to load conversation:', error);
+            document.getElementById('messages-container').innerHTML = 
+                '<div class="text-center text-red-500">Failed to load conversation</div>';
+        }
+    }
+
+    function renderMessages(messages) {
+        const container = document.getElementById('messages-container');
+        
+        if (messages.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-500">No messages yet</div>';
+            return;
+        }
+        
+        container.innerHTML = messages.map(msg => {
+            const isBot = msg.sender_type === 'bot';
+            const time = new Date(msg.created_at).toLocaleTimeString();
+            
+            return `
+                <div class="flex ${isBot ? 'justify-start' : 'justify-end'}">
+                    <div class="message-bubble ${isBot ? 'bg-white border' : 'bg-blue-600 text-white'} rounded-lg px-4 py-2 shadow">
+                        <div class="text-xs ${isBot ? 'text-gray-500' : 'text-blue-200'} mb-1">
+                            ${isBot ? 'Bot' : 'Customer'} • ${time}
+                        </div>
+                        <div class="${msg.content_type === 'image' ? '' : ''}">
+                            ${msg.content_type === 'image' 
+                                ? `<img src="${msg.content}" class="max-w-xs rounded">`
+                                : msg.content_type === 'audio'
+                                ? `<audio controls src="${msg.content}" class="max-w-xs"></audio>`
+                                : `<p>${escapeHtml(msg.content)}</p>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // WebSocket connection for real-time updates
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(`${protocol}//${window.location.host}/ws/conversations/${conversationId}`);
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'new_message') {
+                loadConversation();
+            }
+        };
+        
+        ws.onclose = function() {
+            console.log('WebSocket disconnected, reconnecting...');
+            setTimeout(connectWebSocket, 3000);
+        };
+    }
+
+    // Send message (for agent responses)
+    async function sendMessage() {
+        const input = document.getElementById('message-input');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        try {
+            await fetch(`/admin/conversations/${conversationId}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: message, sender_type: 'agent' })
+            });
+            
+            input.value = '';
+            loadConversation();
+        } catch (error) {
+            console.error('Failed to send message:', error);
+        }
+    }
+
+    // Event listeners
+    document.getElementById('send-btn').addEventListener('click', sendMessage);
+    document.getElementById('message-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // Initialize
+    loadConversation();
+    connectWebSocket();
+    
+    // Refresh every 10 seconds
+    setInterval(loadConversation, 10000);
+</script>
+{% endblock %}

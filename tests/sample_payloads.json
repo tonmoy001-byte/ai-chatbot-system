@@ -1,0 +1,109 @@
+{
+  "facebook": {
+    "text_message": {
+      "object": "page",
+      "entry": [
+        {
+          "id": "PAGE_ID",
+          "time": 1234567890,
+          "messaging": [
+            {
+              "sender": {
+                "id": "USER_ID"
+              },
+              "recipient": {
+                "id": "PAGE_ID"
+              },
+              "timestamp": 1234567890,
+              "message": {
+                "mid": "mid.$cAAE5MQCMwiNjhY example-message-id",
+                "text": "Hello, I need help with my order",
+                "quick_reply": {
+                  "payload": "DEVELOPER_DEFINED_PAYLOAD"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "image_message": {
+      "object": "page",
+      "entry": [
+        {
+          "id": "PAGE_ID",
+          "time": 1234567890,
+          "messaging": [
+            {
+              "sender": {
+                "id": "USER_ID"
+              },
+              "recipient": {
+                "id": "PAGE_ID"
+              },
+              "timestamp": 1234567890,
+              "message": {
+                "mid": "mid.$cAAE5MQCMwiNjhY example-image-id",
+                "attachments": [
+                  {
+                    "type": "image",
+                    "payload": {
+                      "url": "https://example.com/image.jpg"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "postback": {
+      "object": "page",
+      "entry": [
+        {
+          "id": "PAGE_ID",
+          "time": 1234567890,
+          "messaging": [
+            {
+              "sender": {
+                "id": "USER_ID"
+              },
+              "recipient": {
+                "id": "PAGE_ID"
+              },
+              "timestamp": 1234567890,
+              "postback": {
+                "title": "Order Status",
+                "payload": "ORDER_ORD-123456"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "instagram": {
+    "text_message": {
+      "object": "instagram",
+      "entry": [
+        {
+          "id": "INSTAGRAM_BUSINESS_ACCOUNT_ID",
+          "time": 1234567890,
+          "messaging": [
+            {
+              "sender": {
+                "id": "USER_ID"
+              },
+              "timestamp": 1234567890,
+              "message": {
+                "mid": "mid.$cAAE5MQCMwiNjhY example-message-id",
+                "text": "Hi, I have a question about your products"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
