@@ -15,20 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     
     services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: chatbot_test
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpassword
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
       redis:
         image: redis:7-alpine
         options: >-
@@ -71,10 +57,11 @@ jobs:
       
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/chatbot_test
+          DATABASE_URL: sqlite:///./test.db
           REDIS_URL: redis://localhost:6379
           SECRET_KEY: test-secret-key
           ENCRYPTION_KEY: test-encryption-key
+          GEMINI_API_KEY: test-gemini-key
           DEBUG: true
         run: |
           pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing

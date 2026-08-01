@@ -9,8 +9,11 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
     
-    # Database
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/chatbot"
+    # Database (Supabase only)
+    # Direct connection: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+    # Session pooler:    postgres://postgres.[PROJECT-REF]:[PASSWORD]@aws-[REGION].pooler.supabase.com:5432/postgres
+    # Transaction pooler: postgres://postgres.[PROJECT-REF]:[PASSWORD]@aws-[REGION].pooler.supabase.com:6543/postgres
+    DATABASE_URL: str
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
@@ -24,7 +27,10 @@ class Settings(BaseSettings):
     # Instagram
     INSTAGRAM_ACCESS_TOKEN: Optional[str] = None
     
-    # OpenAI
+    # Google Gemini
+    GEMINI_API_KEY: Optional[str] = None
+    
+    # OpenAI (for voice transcription via Whisper)
     OPENAI_API_KEY: Optional[str] = None
     
     # Google Calendar

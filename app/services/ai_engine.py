@@ -1,4 +1,5 @@
-from openai import OpenAI
+from google import genai
+from google.genai import types
 from typing import Dict, Any, Optional, List
 import logging
 import json
@@ -11,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 class AIEngine:
     def __init__(self):
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = "gpt-4"
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.model = "gemini-2.5-flash"
         self.default_system_prompt = """You are a helpful customer service assistant for a business.
         Respond in a friendly, professional manner.
         Keep responses concise but helpful (under 200 words when possible).
@@ -29,46 +30,50 @@ class AIEngine:
     ) -> str:
         """Generate AI response to customer message."""
         
-        messages = []
+        contents = []
         
-        # Add system prompt
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        else:
-            messages.append({"role": "system", "content": self.default_system_prompt})
+        # Add conversation history if provided
+        if conversation_history:
+            for msg in conversation_history[-10:]:  # Last 10 messages
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+                contents.append(types.Content(
+                    role=role,
+                    parts=[types.Part.from_text(text=content)]
+                ))
         
-        # Add context if available
+        # Build the user message with context
+        user_message = message
         if context:
             context_parts = []
             for k, v in context.items():
                 if v:
                     context_parts.append(f"{k}: {v}")
             if context_parts:
-                messages.append({
-                    "role": "system",
-                    "content": "Context information:\n" + "\n".join(context_parts)
-                })
-        
-        # Add conversation history if provided
-        if conversation_history:
-            for msg in conversation_history[-10:]:  # Last 10 messages
-                messages.append(msg)
+                user_message = "Context information:\n" + "\n".join(context_parts) + "\n\nCustomer message: " + message
         
         # Add customer message
-        messages.append({"role": "user", "content": message})
+        contents.append(types.Content(
+            role="user",
+            parts=[types.Part.from_text(text=user_message)]
+        ))
+        
+        # Use system prompt or default
+        prompt = system_prompt or self.default_system_prompt
         
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.models.generate_content(
                 model=self.model,
-                messages=messages,
-                max_tokens=500,
-                temperature=0.7,
-                top_p=1.0,
-                frequency_penalty=0.0,
-                presence_penalty=0.0
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=prompt,
+                    max_output_tokens=500,
+                    temperature=0.7,
+                    top_p=1.0
+                )
             )
             
-            response_text = response.choices[0].message.content
+            response_text = response.text
             
             # Log the interaction
             logger.info(f"AI Response generated for message: {message[:50]}...")

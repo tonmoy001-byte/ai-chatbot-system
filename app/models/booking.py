@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, JSON, Integer
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -8,8 +9,8 @@ from app.database import Base
 class Booking(Base):
     __tablename__ = "bookings"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    customer_id = Column(String(36), ForeignKey("customers.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False)
     service_name = Column(String(255), nullable=False)
     start_time = Column(DateTime(timezone=True), nullable=False)
     end_time = Column(DateTime(timezone=True))

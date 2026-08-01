@@ -256,11 +256,13 @@ class AnalyticsService:
     
     def _get_average_messages_per_conversation(self) -> float:
         """Calculate average messages per conversation."""
-        result = self.db.query(
-            func.avg(func.count(Message.id))
-        ).join(Conversation).group_by(Message.conversation_id).scalar()
+        total_messages = self.db.query(func.count(Message.id)).scalar() or 0
+        total_conversations = self.db.query(func.count(Conversation.id)).scalar() or 0
         
-        return result if result else 0
+        if total_conversations == 0:
+            return 0.0
+        
+        return total_messages / total_conversations
     
     def _calculate_growth_rate(self, current: int, previous: int) -> float:
         """Calculate growth rate percentage."""

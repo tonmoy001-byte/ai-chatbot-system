@@ -79,8 +79,10 @@ APP_NAME=AI Chatbot System
 DEBUG=true
 ENVIRONMENT=development
 
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/chatbot
+# Database (Supabase only)
+# Direct connection: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+# Session pooler:    postgres://postgres.[PROJECT-REF]:[PASSWORD]@aws-[REGION].pooler.supabase.com:5432/postgres
+DATABASE_URL=your_supabase_connection_string
 
 # Redis
 REDIS_URL=redis://localhost:6379

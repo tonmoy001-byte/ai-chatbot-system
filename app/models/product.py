@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, Text, Numeric, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -7,7 +8,7 @@ from app.database import Base
 class Product(Base):
     __tablename__ = "products"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sku = Column(String(50), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)

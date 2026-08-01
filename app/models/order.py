@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, JSON, Numeric
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -8,9 +9,9 @@ from app.database import Base
 class Order(Base):
     __tablename__ = "orders"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_number = Column(String(50), unique=True, nullable=False, index=True)
-    customer_id = Column(String(36), ForeignKey("customers.id"), nullable=False)
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False)
     status = Column(String(20), default="pending", index=True)
     items = Column(JSON, default=[])
     subtotal = Column(Numeric(10, 2), default=0)

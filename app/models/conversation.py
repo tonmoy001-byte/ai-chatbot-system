@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -8,8 +9,8 @@ from app.database import Base
 class Conversation(Base):
     __tablename__ = "conversations"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    customer_id = Column(String(36), ForeignKey("customers.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=False)
     status = Column(String(20), default="active")
     started_at = Column(DateTime(timezone=True), server_default=func.now())
     last_message_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -25,8 +26,8 @@ class Conversation(Base):
 class Message(Base):
     __tablename__ = "messages"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    conversation_id = Column(String(36), ForeignKey("conversations.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id"), nullable=False)
     sender_type = Column(String(20), nullable=False)
     content_type = Column(String(20), nullable=False)
     content = Column(Text)
